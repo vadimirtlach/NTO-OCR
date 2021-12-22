@@ -52,9 +52,12 @@ class Dataset:
         text = "".join(text)
         return text
     
-    def add_special_tokens(self, label):
+    @staticmethod
+    def add_special_tokens(label, max_length):
         label = list(label)
-        num_paddings = self.max_length - len(label)
+        length = len(label)
+        assert max_length >= length, f"'max_length' must be equal or greater than input sequence's length, but input sequence's length ({length}) > max length ({max_length})"
+        num_paddings = max_length - length
         label = [Dataset.bos_token_index] + label + [Dataset.pad_token_index] * num_paddings  + [Dataset.eos_token_index]
         label = np.array(label)
         return label
@@ -70,8 +73,8 @@ class Dataset:
         
         if self.labels is not None:
             label = self.labels[index]
-            label = list(Dataset.text2label(label))
-            label = self.add_special_tokens(label)
+            label = Dataset.text2label(label)
+            label = Dataset.add_special_tokens(label, max_length=self.max_length)
             return image, label
         
         return image
