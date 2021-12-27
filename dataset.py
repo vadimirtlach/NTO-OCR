@@ -135,8 +135,6 @@ class Dataset:
             
             if self.add_special_tokens:
                 label = Dataset.add_special_tokens(label, bos_token_index=Dataset.bos_token_index, eos_token_index=Dataset.eos_token_index)
-            else:
-                label = label - len(Dataset.special_tokens)
                 
             return image, label
         
