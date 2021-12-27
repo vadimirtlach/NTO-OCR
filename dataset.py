@@ -2,6 +2,8 @@ from torch import DataLoader
 import numpy as np
 import string 
 import cv2
+import random
+import matplotlib as plt
 
 
 class Dataset:
@@ -11,8 +13,8 @@ class Dataset:
     english_upper_letters = list(string.ascii_uppercase)
     digits = list(string.digits)
     puntuations = list(string.punctuation + " ")
-    special_tokens = ["<BOS>", "<PAD>", "<EOS>", "<OOV>"]
-    characters = special_tokens + russian_lower_letters + russian_upper_letters + english_lower_letters + english_upper_letters + digits + puntuations
+    special_tokens = ["<BOS>", "<PAD>", "<OOV>", "<EOS>"]
+    characters = special_tokens[:-1] + russian_lower_letters + russian_upper_letters + digits + puntuations + ["<EOS>"]
     classes = {idx: character for idx, character in enumerate(characters)}
     reversed_classes = {character: idx for idx, character in enumerate(characters)}
     
@@ -21,11 +23,13 @@ class Dataset:
     pad_token_index = reversed_classes["<PAD>"]
     eos_token_index = reversed_classes["<EOS>"]
     
-    def __init__(self, pathes, labels=None, transforms=None, max_length=25):
+    def __init__(self, pathes, labels=None, transforms=None, max_length=25, add_special_tokens=False):
         self.pathes = pathes
         self.labels = labels
         self.transforms = transforms
         self.max_length = max_length
+        self.add_special_tokens = add_special_tokens
+        
         
     def __len__(self):
         return len(self.pathes)
@@ -52,15 +56,68 @@ class Dataset:
         text = "".join(text)
         return text
     
+    
     @staticmethod
-    def add_special_tokens(label, max_length):
+    def labels2texts(labels):
+        texts = []
+        for label in labels:
+            text = Dataset.label2text(label)
+            texts.append(text)
+        
+        texts = np.array(texts)
+        return texts
+    
+    @staticmethod
+    def texts2labels(texts):
+        labels = []
+        for text in texts:
+            label = Dataset.text2label(text)
+            labels.append(label)
+        
+        labels = np.array(labels)
+        return labels
+    
+    @staticmethod
+    def pad_label(label, max_length, pad_token_index):
         label = list(label)
         length = len(label)
         assert max_length >= length, f"'max_length' must be equal or greater than input sequence's length, but input sequence's length ({length}) > max length ({max_length})"
         num_paddings = max_length - length
-        label = [Dataset.bos_token_index] + label + [Dataset.pad_token_index] * num_paddings  + [Dataset.eos_token_index]
-        label = np.array(label)
-        return label
+        padded_label = label + ([pad_token_index] * num_paddings)
+        padded_label = np.array(padded_label)
+        
+        return padded_label
+    
+    @staticmethod
+    def add_special_tokens(label, bos_token_index, eos_token_index):
+        label = list(label)
+        added_label =  [bos_token_index] + label + [eos_token_index]
+        added_label = np.array(added_label)
+        return added_label
+    
+    
+    def show_samples(self, rows=1, columns=1, coef=3):
+        figsize = (rows*coef, columns*coef) if rows >= columns else (columns*coef, rows*coef)
+        fig = plt.figure(figsize=figsize)
+        fig.set_facecolor("#fff")
+        
+        num_samples = len(self)
+        for i in range(rows*columns):
+            index = random.randint(0, num_samples-1)
+            image, label = self[index]
+            image = image.permute(1, 2, 0)
+            label = Dataset.label2text(label)
+            
+            ax = fig.add_subplot(rows, columns, i+1)
+            ax.set_facecolor("#fff")
+            ax.imshow(image)
+            ax.set_title(label)
+            ax.xaxis.set_visible(False)
+            ax.yaxis.set_visible(False)
+        
+        fig.tight_layout(pad=1)
+        fig.show()
+        
     
     def __getitem__(self, index):
         path = self.pathes[index]
@@ -74,17 +131,22 @@ class Dataset:
         if self.labels is not None:
             label = self.labels[index]
             label = Dataset.text2label(label)
-            label = Dataset.add_special_tokens(label, max_length=self.max_length)
+            label = Dataset.pad_label(label, max_length=self.max_length, pad_token_index=Dataset.pad_token_index)
+            
+            if self.add_special_tokens:
+                label = Dataset.add_special_tokens(label, bos_token_index=Dataset.bos_token_index, eos_token_index=Dataset.eos_token_index)
+                
             return image, label
         
         return image
     
     @staticmethod
-    def create_loader(pathes, labels=None, transforms=None, max_length=25, batch_size=16, pin_memory=False, num_workers=0, shuffle=False, drop_last=False):
+    def create_loader(pathes, labels=None, transforms=None, max_length=25, add_special_tokens=False, batch_size=16, pin_memory=False, num_workers=0, shuffle=False, drop_last=False):
         dataset = Dataset(pathes=pathes, 
                           labels=labels, 
                           max_length=max_length,
-                          transforms=transforms)
+                          transforms=transforms, 
+                          add_special_tokens=add_special_tokens)
         
         loader = DataLoader(dataset=dataset, 
                             batch_size=batch_size, 
