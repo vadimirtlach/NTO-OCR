@@ -29,7 +29,7 @@ class Dataset:
         self.transforms = transforms
         self.max_length = max_length
         self.add_special_tokens = add_special_tokens
-        
+        self.reversed_classes = {class_: idx for idx, class_ in enumerate(self.classes)}
         
     def __len__(self):
         return len(self.pathes)

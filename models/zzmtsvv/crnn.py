@@ -1,3 +1,7 @@
+from torch import nn
+import timm
+
+
 class CRNN(nn.Module):
   def __init__(self, encoder_name='seresnet34', num_classes=111):
     super(CRNN, self).__init__()
