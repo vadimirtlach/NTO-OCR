@@ -15,7 +15,6 @@ Datasets' links:
 - Original Dataset: https://www.kaggle.com/vad13irt/nto-ocr
 - Added Dataset: https://www.kaggle.com/constantinwerner/cyrillic-handwriting-dataset 
 
-
 ### Evaluation
 The **CER (Character Error Rate)** metric was used as the main metric for evaluating participants' submissions. <br>
 
@@ -31,6 +30,11 @@ The **Accuracy** metric is used as an additional metric to evaluate the submissi
 <img src="https://render.githubusercontent.com/render/math?math=pred_i"> - prediction of i-th sample.<br>
 <img src="https://render.githubusercontent.com/render/math?math=true_i"> - target  of i-th sample.<br>
 <img src="https://render.githubusercontent.com/render/math?math=n"> - amount of samples.<br>
+
+
+### Model
+
+[![Blank-board.png](https://i.postimg.cc/sgcsFkS9/Blank-board.png)](https://postimg.cc/4YmrVFWm)
 
 ### Requirements
 * numpy==1.19.5
