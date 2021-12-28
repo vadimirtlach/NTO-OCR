@@ -20,7 +20,7 @@ class CRNN(nn.Module):
         nn.ReLU()
         )
 
-    self.lstm = nn.LSTM(input_size=2048, hidden_size=256, bidirectional=True,
+    self.lstm = nn.LSTM(input_size=512, hidden_size=256, bidirectional=True,
                         num_layers=4, dropout=.1, batch_first=False)
     
     self._weights_init(self.lstm)
