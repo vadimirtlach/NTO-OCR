@@ -20,8 +20,10 @@ The **Accuracy** metric is used as an additional metric to evaluate the submissi
 <img src="https://render.githubusercontent.com/render/math?math=n"> - amount of samples<br>
 
 ### Requirements
-* numpy==1.19.5
-* torch==1.8.1
+* matplotlib==3.3.1
 * timm==0.4.12
-* opencv_python_headless==4.5.2.52
+* torch==1.8.1
 * editdistance==0.6.0
+* opencv_python_headless==4.5.2.52
+* numpy==1.19.5
+

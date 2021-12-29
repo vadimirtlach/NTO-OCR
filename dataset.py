@@ -13,7 +13,7 @@ class Dataset:
     english_upper_letters = list(string.ascii_uppercase)
     digits = list(string.digits)
     puntuations = list(string.punctuation + " ")
-    special_tokens = ["<BOS>", "<PAD>", "<OOV>", "<EOS>"]
+    special_tokens = ["<PAD>", "<BOS>", "<OOV>", "<EOS>"]
     characters = special_tokens[:-1] + russian_lower_letters + russian_upper_letters + digits + puntuations + ["<EOS>"]
     classes = {idx: character for idx, character in enumerate(characters)}
     reversed_classes = {character: idx for idx, character in enumerate(characters)}
@@ -71,7 +71,7 @@ class Dataset:
     def texts2labels(texts):
         labels = []
         for text in texts:
-            label = Dataset.text2label(text)
+            label = list(Dataset.text2label(text))
             labels.append(label)
         
         labels = np.array(labels)
@@ -122,23 +122,36 @@ class Dataset:
     def __getitem__(self, index):
         path = self.pathes[index]
         image = cv2.imread(path)
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        image = np.expand_dims(image,axis=-1)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        #image = np.expand_dims(image,axis=-1)
         
         if self.transforms:
             image = self.transforms(image=image)["image"]
         
         if self.labels is not None:
             label = self.labels[index]
-            label = Dataset.text2label(label)
-            label = Dataset.pad_label(label, max_length=self.max_length, pad_token_index=Dataset.pad_token_index)
-            
+            label = Dataset.text2label(label)            
             if self.add_special_tokens:
                 label = Dataset.add_special_tokens(label, bos_token_index=Dataset.bos_token_index, eos_token_index=Dataset.eos_token_index)
                 
+            label = Dataset.pad_label(label, max_length=self.max_length+2, pad_token_index=Dataset.pad_token_index)
+            
             return image, label
         
         return image
+    
+    # TODO
+    # def get_classes_frequency(self, return_encoded=False):
+    #     all_ = "".join(self.labels)
+        
+    #     unique, counts = np.unique(list(all_), return_counts=True)
+    #     frequency = counts / len(all_)
+    #     encoded_keys = Dataset.texts2labels(unique).squeeze(axis=1)
+    
+    #     if return_encoded:
+    #         return dict(zip(unique, frequency)), dict(zip(encoded_keys, frequency))
+        
+    #     return dict(zip(unique, frequency))
     
     @staticmethod
     def create_loader(pathes, labels=None, transforms=None, max_length=25, add_special_tokens=False, batch_size=16, pin_memory=False, num_workers=0, shuffle=False, drop_last=False):
